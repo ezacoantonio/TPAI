@@ -27,6 +27,24 @@ Recommended local defaults:
 - If Supabase keys are missing, the app can still enter demo mode.
 - If `OPENAI_API_KEY` is missing, chat planning falls back to a local planner only when demo mode is enabled.
 
+## Backend setup
+
+To use the real backend locally, create a Supabase project and run the SQL in `supabase/schema.sql`.
+
+Then set:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_ENABLE_DEMO_MODE=false`
+
+Once that is done, local testing should cover:
+
+1. Sign up or sign in.
+2. Save onboarding successfully.
+3. Refresh and confirm the saved setup still loads.
+4. Generate a plan and confirm it persists.
+5. Update plan blocks and confirm they reload with the new status.
+
 ## Included
 
 - Mobile-first onboarding
@@ -82,6 +100,7 @@ Do not treat the Render deployment as production-ready until all of the followin
 - Supabase sign up and sign in work.
 - User data persists across refreshes and devices.
 - The chat endpoint returns real OpenAI-backed responses.
+- The SQL schema and RLS policies in `supabase/schema.sql` have been applied successfully.
 - `npm test` and `npm run build` pass locally before pushing.
 
 ## Smoke checklist

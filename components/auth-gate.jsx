@@ -10,7 +10,44 @@ export function AuthGate({ children }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [bootstrapping, setBootstrapping] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  async function hydrateAuthenticatedState(session) {
+    if (!session?.access_token || !session.user) {
+      return;
+    }
+
+    setBootstrapping(true);
+    actions.setUser({
+      email: session.user.email,
+      mode: "supabase",
+      accessToken: session.access_token
+    });
+
+    try {
+      const response = await fetch("/api/bootstrap", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to load your account data.");
+      }
+
+      const remoteState = await response.json();
+      actions.replaceState(remoteState, {
+        email: session.user.email,
+        mode: "supabase",
+        accessToken: session.access_token
+      });
+    } catch (bootstrapError) {
+      setMessage(bootstrapError.message);
+    } finally {
+      setBootstrapping(false);
+    }
+  }
 
   useEffect(() => {
     const client = getSupabaseBrowserClient();
@@ -18,23 +55,17 @@ export function AuthGate({ children }) {
       return;
     }
 
-    client.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        actions.setUser({
-          email: data.user.email,
-          mode: "supabase"
-        });
+    client.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        hydrateAuthenticatedState(data.session);
       }
     });
 
     const {
       data: { subscription }
     } = client.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        actions.setUser({
-          email: session.user.email,
-          mode: "supabase"
-        });
+      if (session) {
+        hydrateAuthenticatedState(session);
       }
     });
 
@@ -43,6 +74,10 @@ export function AuthGate({ children }) {
 
   if (!hydrated) {
     return <div className="auth-screen"><div className="auth-card"><p>Loading your coach...</p></div></div>;
+  }
+
+  if (bootstrapping) {
+    return <div className="auth-screen"><div className="auth-card"><p>Loading your saved plan and profile...</p></div></div>;
   }
 
   if (state.user) {
@@ -76,10 +111,9 @@ export function AuthGate({ children }) {
       }
 
       if (data.user) {
-        actions.setUser({
-          email: data.user.email,
-          mode: "supabase"
-        });
+        if (data.session) {
+          await hydrateAuthenticatedState(data.session);
+        }
       }
 
       if (mode === "signup") {

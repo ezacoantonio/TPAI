@@ -1,11 +1,50 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useAppState } from "@/lib/store";
 import { formatTime } from "@/lib/time";
 
 export function PlanTab() {
   const { state, actions } = useAppState();
+  const [error, setError] = useState("");
+  const [pending, startTransition] = useTransition();
   const plan = state.planDay;
+
+  async function updateBlockStatus(blockId, status) {
+    setError("");
+
+    if (state.user?.mode === "supabase" && state.user.accessToken && plan?.id) {
+      startTransition(async () => {
+        try {
+          const response = await fetch("/api/plan/block", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${state.user.accessToken}`
+            },
+            body: JSON.stringify({
+              planDayId: plan.id,
+              blockId,
+              status
+            })
+          });
+
+          if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Unable to update plan block.");
+          }
+
+          const payload = await response.json();
+          actions.setPlan(payload.plan);
+        } catch (updateError) {
+          setError(updateError.message);
+        }
+      });
+      return;
+    }
+
+    actions.updatePlanBlock(blockId, { status });
+  }
 
   if (!plan) {
     return (
@@ -30,6 +69,7 @@ export function PlanTab() {
           </div>
           <span className="status-pill">{plan.status}</span>
         </div>
+        {error && <p className="error-text">{error}</p>}
 
         <div className="timeline">
           {plan.blocks.map((block) => (
@@ -43,13 +83,13 @@ export function PlanTab() {
               </div>
               <p className="subtle">{block.categoryLabel} · {block.notes}</p>
               <div className="button-row">
-                <button type="button" className="secondary-button" onClick={() => actions.updatePlanBlock(block.id, { status: "approved" })}>
+                <button type="button" className="secondary-button" disabled={pending} onClick={() => updateBlockStatus(block.id, "approved")}>
                   Approve
                 </button>
-                <button type="button" className="secondary-button" onClick={() => actions.updatePlanBlock(block.id, { status: "done" })}>
+                <button type="button" className="secondary-button" disabled={pending} onClick={() => updateBlockStatus(block.id, "done")}>
                   Done
                 </button>
-                <button type="button" className="ghost-button" onClick={() => actions.updatePlanBlock(block.id, { status: "skipped" })}>
+                <button type="button" className="ghost-button" disabled={pending} onClick={() => updateBlockStatus(block.id, "skipped")}>
                   Skip
                 </button>
               </div>

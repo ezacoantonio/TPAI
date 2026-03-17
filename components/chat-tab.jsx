@@ -30,7 +30,10 @@ export function ChatTab({ onOpenPlan }) {
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(state.user?.accessToken ? { Authorization: `Bearer ${state.user.accessToken}` } : {})
+          },
           body: JSON.stringify({
             ...state,
             chatMessages: [...state.chatMessages, message]
@@ -48,7 +51,11 @@ export function ChatTab({ onOpenPlan }) {
           content: payload.reply,
           createdAt: new Date().toISOString()
         });
-        actions.setPlan(payload.plan);
+        if (state.user?.mode === "supabase") {
+          actions.setPlan(payload.plan);
+        } else {
+          actions.setPlan(payload.plan);
+        }
         onOpenPlan();
       } catch (submissionError) {
         setError(submissionError.message);
