@@ -13,7 +13,7 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState("chat");
   const { state, hydrated } = useAppState();
 
-  const incompleteSetup = !state.profile.name || !state.mission;
+  const incompleteSetup = !state.profile.name || !state.profile.mission;
 
   return (
     <AuthGate>

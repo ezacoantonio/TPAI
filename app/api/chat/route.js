@@ -24,6 +24,7 @@ export async function POST(request) {
 
     return NextResponse.json(response);
   } catch (error) {
+    console.error("Chat route failed:", error);
     return NextResponse.json(
       { error: error.message || "Unable to process chat request." },
       { status: 500 }

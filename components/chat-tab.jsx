@@ -41,7 +41,16 @@ export function ChatTab({ onOpenPlan }) {
         });
 
         if (!response.ok) {
-          throw new Error("Unable to generate a coaching response.");
+          let message = "Unable to generate a coaching response.";
+          try {
+            const failure = await response.json();
+            if (failure?.error) {
+              message = failure.error;
+            }
+          } catch {
+            // Leave the generic message when the response body is not JSON.
+          }
+          throw new Error(message);
         }
 
         const payload = await response.json();
