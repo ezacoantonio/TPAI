@@ -1,0 +1,23 @@
+{
+  "name": "tpai-life-coach",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "browserslist": "^4.28.1",
+    "caniuse-lite": "^1.0.30001780",
+    "next": "^15.2.2",
+    "openai": "^4.91.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
+  }
+}
